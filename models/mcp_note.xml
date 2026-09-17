@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_mcp_note_list" model="ir.ui.view">
+        <field name="name">mcp.note.list</field>
+        <field name="model">mcp.note</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="model_id"/>
+                <field name="method"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_mcp_note_form" model="ir.ui.view">
+        <field name="name">mcp.note.form</field>
+        <field name="model">mcp.note</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="model_id"/>
+                        <field name="method" invisible="not model_id"/>
+                        <field name="sequence"/>
+                    </group>
+                    <field name="content" placeholder="What the assistant should know, e.g. 'unlink' deletes records."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_mcp_note_search" model="ir.ui.view">
+        <field name="name">mcp.note.search</field>
+        <field name="model">mcp.note</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="model_id"/>
+                <field name="method"/>
+                <filter name="global" string="Global" domain="[('model_id', '=', False)]"/>
+                <group>
+                    <filter name="group_model" string="Model" context="{'group_by': 'model_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_mcp_note" model="ir.actions.act_window">
+        <field name="name">MCP Notes</field>
+        <field name="res_model">mcp.note</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Document the API for AI assistants</p>
+            <p>Global notes are sent at connection time; model and method notes appear when the assistant describes them.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_mcp_note" name="MCP Notes" parent="base.menu_custom"
+              action="bigmcp.action_mcp_note" sequence="90"
+              groups="bigmcp.group_admin"/>
+
+</odoo>

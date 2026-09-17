@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="note_orm_vocabulary" model="mcp.note">
+        <field name="name">ORM vocabulary</field>
+        <field name="sequence">1</field>
+        <field name="content">create = insert, write = update, unlink = delete, search_read = select. Confirmation-style workflows are usually methods named action_* on the record (e.g. sale.order.action_confirm).</field>
+    </record>
+
+</odoo>
