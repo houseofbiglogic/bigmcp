@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'BigMCP - Odoo MCP Server',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     'category': 'Biglogic',
     'summary': 'Expose the whole Odoo ORM to AI assistants over the Model Context Protocol',
     'description': """
@@ -18,11 +18,12 @@ assistant with notes attached globally, to a model or to a single method.
     'author': 'BigLogic',
     'website': 'https://biglogic.tech',
     'license': 'LGPL-3',
-    'depends': ['base', 'api_doc'],
+    'depends': ['base_setup', 'api_doc'],
     'data': [
         'security/res_groups.xml',
         'security/ir.model.access.csv',
         'models/mcp_note.xml',
+        'views/res_config_settings_views.xml',
         'data/mcp_note_data.xml',
     ],
     'installable': True,

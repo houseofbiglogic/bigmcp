@@ -29,10 +29,28 @@ class TestMcpTools(TransactionCase):
         """The seeded global note is part of the initialize instructions."""
         self.assertIn('unlink = delete', self.server._instructions())
 
+    def test_instructions_aggregation_call(self):
+        """The aggregation call recommended by the instructions works as written, through call_method."""
+        self.assertIn('formatted_read_group', self.server._instructions())
+        groups = self._call('call_method', model='res.partner', method='formatted_read_group',
+                            kwargs={'domain': [], 'groupby': ['is_company'], 'aggregates': ['__count']})
+        self.assertEqual(sum(group['__count'] for group in groups), self.env['res.partner'].search_count([]))
+
     def test_list_models(self):
-        """list_models finds a model by technical name."""
+        """list_models finds a model by technical name, under the module that defines it."""
         models = self._call('list_models', query='res.partner')
-        self.assertIn('res.partner', [m['model'] for m in models])
+        self.assertIn('res.partner', models['base'])
+
+    def test_list_models_is_complete(self):
+        """Without a query every readable model is listed; 'module' keeps the models that module defines."""
+        models = self._call('list_models')
+        readable = [
+            name for name in self.env['ir.model'].search([]).mapped('model')
+            if name in self.env and self.env[name].has_access('read')
+        ]
+        self.assertEqual(sum(len(group) for group in models.values()), len(readable))
+        self.assertEqual(models['bigmcp'], {'mcp.note': 'MCP Note', 'mcp.server': 'MCP Server'})
+        self.assertEqual(self._call('list_models', module='bigmcp'), {'bigmcp': models['bigmcp']})
 
     def test_describe_model(self):
         """describe_model returns fields, model-specific methods and both note scopes."""
@@ -42,6 +60,61 @@ class TestMcpTools(TransactionCase):
         self.assertNotIn('search_read', info['methods'])
         self.assertIn('Customers and vendors', info['notes'])
         self.assertIn('Archive instead', info['method_notes']['unlink'])
+
+    def test_describe_model_generic_methods_on_request(self):
+        """Methods every model has, from BaseModel or added through 'base', are only listed on request."""
+        methods = self._call('describe_model', model='res.partner', include_fields=False)['methods']
+        self.assertNotIn('web_read', methods)
+        methods = self._call('describe_model', model='res.partner', include_fields=False,
+                             include_orm_methods=True)['methods']
+        self.assertIn('web_read', methods)
+        self.assertIn('search_read', methods)
+
+    def test_describe_model_flags_unsearchable_fields(self):
+        """Only the fields a domain cannot use carry the 'searchable' flag, set to False."""
+        fields = self._call('describe_model', model='res.partner', include_methods=False)['fields']
+        self.assertIs(fields['contact_address']['searchable'], False)
+        self.assertNotIn('searchable', fields['name'])
+
+    def test_describe_model_help_only_for_named_fields(self):
+        """The overview keeps every selection option but no help text; naming a field adds the help."""
+        overview = self._call('describe_model', model='res.partner', include_methods=False)['fields']
+        self.assertNotIn('help', overview['tz'])
+        detail = self._call('describe_model', model='res.partner', fields=['tz'], include_methods=False)['fields']
+        self.assertEqual(list(detail), ['tz'])
+        self.assertIn('help', detail['tz'])
+        self.assertEqual(detail['tz']['selection'], overview['tz']['selection'])
+
+    def test_binary_fields_come_back_as_size(self):
+        """Reads return the size of a binary field; the content needs an explicit bin_size=False."""
+        attachment = self.env['ir.attachment'].create({'name': 'mcp.txt', 'raw': b'hello'})
+        rows = self._call('search_read', model='ir.attachment',
+                          domain=[['id', '=', attachment.id]], fields=['datas'])['records']
+        self.assertNotEqual(rows[0]['datas'], 'aGVsbG8=')
+        rows = self._call('call_method', model='ir.attachment', method='read',
+                          ids=[attachment.id], args=[['datas']])
+        self.assertNotEqual(rows[0]['datas'], 'aGVsbG8=')
+        rows = self._call('call_method', model='ir.attachment', method='read',
+                          ids=[attachment.id], args=[['datas']], context={'bin_size': False})
+        self.assertEqual(rows[0]['datas'], 'aGVsbG8=')
+
+    def test_search_read_total_and_archived(self):
+        """'total' counts every match beyond the page; archived records only come with active_test=False."""
+        partners = self.env['res.partner'].create([{'name': f'MCP Count {i}'} for i in range(3)])
+        partners[0].action_archive()
+        domain = [['id', 'in', partners.ids]]
+        result = self._call('search_read', model='res.partner', domain=domain, limit=1)
+        self.assertEqual(result['total'], 2)
+        self.assertEqual(len(result['records']), 1)
+        result = self._call('search_read', model='res.partner', domain=domain, context={'active_test': False})
+        self.assertEqual(result['total'], 3)
+        self.assertEqual(len(result['records']), 3)
+
+    def test_oversized_result_is_truncated(self):
+        """A result above the configured token limit is cut there and ends with the narrowing hint."""
+        self.env['ir.config_parameter'].set_param('bigmcp.max_result_tokens', 10)
+        text = self.server._call_tool('list_models', {})['content'][0]['text']
+        self.assertEqual(text.index('\n[Truncated'), 30)
 
     def test_describe_method(self):
         """describe_method returns the api_doc signature and the method note."""
@@ -57,7 +130,7 @@ class TestMcpTools(TransactionCase):
         self._call('call_method', model='res.partner', method='write',
                    ids=[partner_id], args=[{'phone': '123'}])
         rows = self._call('search_read', model='res.partner',
-                          domain=[['id', '=', partner_id]], fields=['name', 'phone'])
+                          domain=[['id', '=', partner_id]], fields=['name', 'phone'])['records']
         self.assertEqual(rows[0]['phone'], '123')
         self._call('call_method', model='res.partner', method='unlink', ids=[partner_id])
         self.assertFalse(self.env['res.partner'].browse(partner_id).exists())

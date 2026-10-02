@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.bigmcp</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='integration']" position="inside">
+                <setting id="bigmcp_max_result_tokens" help="Largest result one MCP tool call may return to the assistant; longer results are cut.">
+                    <field name="bigmcp_max_result_tokens"/>
+                </setting>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
