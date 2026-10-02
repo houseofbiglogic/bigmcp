@@ -110,6 +110,14 @@ class TestMcpTools(TransactionCase):
         self.assertEqual(result['total'], 3)
         self.assertEqual(len(result['records']), 3)
 
+    def test_call_method_keeps_caller_context(self):
+        """The context of the calling environment (language, companies...) survives a call_method call."""
+        partner = self.env['res.partner'].create({'name': 'MCP Archived'})
+        partner.action_archive()
+        result = self.server.with_context(active_test=False)._call_tool('call_method', {
+            'model': 'res.partner', 'method': 'search_count', 'args': [[['id', '=', partner.id]]]})
+        self.assertEqual(result['content'][0]['text'], '1')
+
     def test_oversized_result_is_truncated(self):
         """A result above the configured token limit is cut there and ends with the narrowing hint."""
         self.env['ir.config_parameter'].set_param('bigmcp.max_result_tokens', 10)

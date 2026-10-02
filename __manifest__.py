@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'BigMCP - Odoo MCP Server',
-    'version': '19.0.1.0.1',
+    'version': '19.0.1.0.2',
     'category': 'Biglogic',
     'summary': 'Expose the whole Odoo ORM to AI assistants over the Model Context Protocol',
     'description': """

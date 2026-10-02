@@ -256,7 +256,8 @@ class McpServer(models.AbstractModel):
         if self._is_readonly_method(Model, method):
             context.setdefault('bin_size', True)
         if context:
-            kwargs['context'] = context
+            # call_kw replaces the whole context: keep the caller's language, timezone and companies.
+            kwargs['context'] = {**self.env.context, **context}
         args = list(args or [])
         if not getattr(get_public_method(Model, method), '_api_model', False):
             args.insert(0, list(ids or []))

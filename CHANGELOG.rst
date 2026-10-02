@@ -2,6 +2,15 @@
 Changelog
 =========
 
+19.0.1.0.2 (2026-10-02)
+=======================
+
+- ``call_method`` artık çağıran kullanıcının bağlamını (dil, saat dilimi, seçili
+  şirketler) korur. Önceden çağrıya bir ``context`` verildiğinde — okuma
+  metotlarında ise her zaman — bu bağlam tümüyle eziliyor, sonuçlar kullanıcının
+  dili ve şirketleri yerine varsayılanlarla dönüyordu. Çağrıda verilen
+  ``context`` anahtarları yine önceliklidir.
+
 19.0.1.0.1 (2026-10-02)
 =======================
 
