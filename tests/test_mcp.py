@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import base64
 import json
 
 from odoo.tests import HttpCase, TransactionCase, tagged
 
+from odoo.addons.bigmcp.controllers.mcp import META_CLIENT_CAPABILITIES, META_PROTOCOL_VERSION, META_SERVER_INFO
 from odoo.addons.bigmcp.models.mcp_server import McpInvalidParams
 
 
@@ -157,8 +159,8 @@ class TestMcpTools(TransactionCase):
 
 
 @tagged('post_install', '-at_install')
-class TestMcpEndpoint(HttpCase):
-    """JSON-RPC transport at /mcp with bearer authentication."""
+class TestMcpLegacyEndpoint(HttpCase):
+    """JSON-RPC transport at /mcp with bearer authentication, legacy era (initialize handshake)."""
 
     def setUp(self):
         super().setUp()
@@ -167,12 +169,12 @@ class TestMcpEndpoint(HttpCase):
         key = self.env['res.users.apikeys'].with_user(user)._generate(None, 'mcp test', False)
         self.headers = {'Authorization': f'Bearer {key}'}
 
-    def _rpc(self, method, params=None, msg_id=1):
+    def _rpc(self, method, params=None, msg_id=1, headers=None):
         """POST one JSON-RPC message and return the HTTP response."""
         payload = {'jsonrpc': '2.0', 'method': method, 'params': params or {}}
         if msg_id is not None:
             payload['id'] = msg_id
-        return self.url_open('/mcp', json=payload, headers=self.headers)
+        return self.url_open('/mcp', json=payload, headers={**self.headers, **(headers or {})})
 
     def test_initialize_and_tools_list(self):
         """Handshake returns the protocol version; tools/list advertises call_method."""
@@ -181,6 +183,23 @@ class TestMcpEndpoint(HttpCase):
         self.assertIn('unlink = delete', init['instructions'])
         tools = self._rpc('tools/list').json()['result']['tools']
         self.assertIn('call_method', [t['name'] for t in tools])
+
+    def test_initialize_echoes_known_version(self):
+        """A known legacy revision is echoed; an unknown one falls back to 2025-06-18."""
+        result = self._rpc('initialize', {'protocolVersion': '2025-11-25'}).json()['result']
+        self.assertEqual(result['protocolVersion'], '2025-11-25')
+        result = self._rpc('initialize', {'protocolVersion': '2024-11-05'}).json()['result']
+        self.assertEqual(result['protocolVersion'], '2025-06-18')
+
+    def test_origin_policy(self):
+        """Any Origin passes by default; with a list only the listed ones and Odoo's own address do."""
+        foreign = {'Origin': 'https://evil.example'}
+        self.assertEqual(self._rpc('ping', headers=foreign).status_code, 200)
+        self.env['ir.config_parameter'].sudo().set_param('bigmcp.allowed_origins', 'https://claude.ai')
+        self.assertEqual(self._rpc('ping', headers=foreign).status_code, 403)
+        self.assertEqual(self._rpc('ping', headers={'Origin': self.base_url()}).status_code, 200)
+        self.env['ir.config_parameter'].sudo().set_param('bigmcp.allowed_origins', 'https://claude.ai, https://evil.example/')
+        self.assertEqual(self._rpc('ping', headers=foreign).status_code, 200)
 
     def test_tools_call(self):
         """A tool call over HTTP returns MCP content."""
@@ -200,3 +219,100 @@ class TestMcpEndpoint(HttpCase):
         """No bearer header and no session means 401."""
         response = self.url_open('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'ping'})
         self.assertEqual(response.status_code, 401)
+
+
+@tagged('post_install', '-at_install')
+class TestMcpModernEndpoint(HttpCase):
+    """Protocol revision 2026-07-28: per-request _meta, mirrored headers, no handshake."""
+
+    def setUp(self):
+        super().setUp()
+        user = self.env.ref('base.user_admin')
+        self.env.ref('bigmcp.group_user').write({'user_ids': [(4, user.id)]})
+        key = self.env['res.users.apikeys'].with_user(user)._generate(None, 'mcp test', False)
+        self.auth = {'Authorization': f'Bearer {key}'}
+
+    def _rpc(self, method, params=None, version='2026-07-28', meta=None, headers=None):
+        """POST one modern request with the _meta and mirrored headers a conforming client sends; overrides let tests break them."""
+        params = dict(params or {})
+        params['_meta'] = {META_PROTOCOL_VERSION: version, META_CLIENT_CAPABILITIES: {}} if meta is None else meta
+        payload = {'jsonrpc': '2.0', 'id': 1, 'method': method, 'params': params}
+        mirrored = {'MCP-Protocol-Version': version, 'Mcp-Method': method}
+        if 'name' in params:
+            mirrored['Mcp-Name'] = params['name']
+        return self.url_open('/mcp', json=payload, headers={**self.auth, **mirrored, **(headers or {})})
+
+    def test_discover(self):
+        """server/discover advertises the version, the tools capability, the instructions and cache hints."""
+        response = self._rpc('server/discover')
+        self.assertEqual(response.status_code, 200)
+        result = response.json()['result']
+        self.assertEqual(result['resultType'], 'complete')
+        self.assertEqual(result['supportedVersions'], ['2026-07-28'])
+        self.assertEqual(result['capabilities'], {'tools': {}})
+        self.assertIn('unlink = delete', result['instructions'])
+        self.assertEqual(result['ttlMs'], 10 * 60000)
+        self.assertEqual(result['cacheScope'], 'public')
+        self.assertEqual(result['_meta'][META_SERVER_INFO]['name'], 'odoo-bigmcp')
+
+    def test_cache_ttl_setting(self):
+        """tools/list carries the configured TTL in milliseconds."""
+        self.env['ir.config_parameter'].sudo().set_param('bigmcp.cache_ttl_minutes', '3')
+        result = self._rpc('tools/list').json()['result']
+        self.assertEqual(result['ttlMs'], 180000)
+        self.assertIn('call_method', [t['name'] for t in result['tools']])
+
+    def test_tools_call(self):
+        """A modern tool call returns MCP content tagged as complete."""
+        result = self._rpc('tools/call', {'name': 'list_models', 'arguments': {'query': 'res.users'}}).json()['result']
+        self.assertEqual(result['resultType'], 'complete')
+        self.assertIn('res.users', result['content'][0]['text'])
+
+    def test_unknown_tool_is_invalid_params(self):
+        """An unknown tool is a protocol error (-32602) on a 200 response, as in the legacy era."""
+        response = self._rpc('tools/call', {'name': 'nope'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['error']['code'], -32602)
+
+    def test_missing_meta_field_is_400(self):
+        """A request without clientCapabilities is malformed."""
+        response = self._rpc('tools/list', meta={META_PROTOCOL_VERSION: '2026-07-28'})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error']['code'], -32602)
+
+    def test_unsupported_version_lists_supported(self):
+        """An unknown version gets -32022 with the supported list, so the client can retry."""
+        response = self._rpc('tools/list', version='2099-01-01')
+        self.assertEqual(response.status_code, 400)
+        error = response.json()['error']
+        self.assertEqual(error['code'], -32022)
+        self.assertEqual(error['data'], {'supported': ['2026-07-28'], 'requested': '2099-01-01'})
+
+    def test_header_mismatch_is_400(self):
+        """A missing or diverging mirrored header is rejected with -32020."""
+        response = self._rpc('tools/call', {'name': 'list_models'}, headers={'Mcp-Name': 'other'})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error']['code'], -32020)
+        response = self._rpc('tools/list', headers={'Mcp-Method': None})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error']['code'], -32020)
+
+    def test_base64_header_value(self):
+        """The base64 sentinel encoding of a header value is decoded before comparison."""
+        encoded = '=?base64?' + base64.b64encode(b'list_models').decode() + '?='
+        response = self._rpc('tools/call', {'name': 'list_models'}, headers={'Mcp-Name': encoded})
+        self.assertEqual(response.status_code, 200)
+
+    def test_unknown_method_is_404(self):
+        """ping no longer exists in the modern era: 404 with -32601."""
+        response = self._rpc('ping')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()['error']['code'], -32601)
+
+    def test_batch_is_rejected(self):
+        """Batches are refused as soon as one message is modern."""
+        meta = {META_PROTOCOL_VERSION: '2026-07-28', META_CLIENT_CAPABILITIES: {}}
+        payload = [{'jsonrpc': '2.0', 'id': 1, 'method': 'tools/list', 'params': {'_meta': meta}}]
+        response = self.url_open('/mcp', json=payload, headers=self.auth)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error']['code'], -32600)

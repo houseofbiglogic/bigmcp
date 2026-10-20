@@ -4,12 +4,25 @@
     <record id="res_config_settings_view_form" model="ir.ui.view">
         <field name="name">res.config.settings.view.form.inherit.bigmcp</field>
         <field name="model">res.config.settings</field>
-        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="priority" eval="60"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//block[@name='integration']" position="inside">
-                <setting id="bigmcp_max_result_tokens" help="Largest result one MCP tool call may return to the assistant; longer results are cut.">
-                    <field name="bigmcp_max_result_tokens"/>
-                </setting>
+            <xpath expr="//form" position="inside">
+                <app data-string="BigMCP" string="BigMCP" name="bigmcp" groups="bigmcp.group_admin">
+                    <block title="MCP Server" name="bigmcp_server_setting_container">
+                        <setting id="bigmcp_max_result_tokens" help="Largest result one MCP tool call may return to the assistant; longer results are cut.">
+                            <field name="bigmcp_max_result_tokens"/>
+                        </setting>
+                        <setting id="bigmcp_cache_ttl_minutes" help="How long MCP clients may reuse the tool list and the server instructions (global notes) before asking again.">
+                            <field name="bigmcp_cache_ttl_minutes"/>
+                        </setting>
+                    </block>
+                    <block title="Security" name="bigmcp_security_setting_container">
+                        <setting id="bigmcp_allowed_origins" help="Browser origins allowed to call /mcp: '*' allows any, otherwise a comma separated list. Odoo's own address is always allowed.">
+                            <field name="bigmcp_allowed_origins" placeholder="*"/>
+                        </setting>
+                    </block>
+                </app>
             </xpath>
         </field>
     </record>

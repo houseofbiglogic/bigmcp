@@ -18,6 +18,8 @@ FIELD_ATTRIBUTES = ('type', 'string', 'help', 'required', 'readonly', 'relation'
 DEFAULT_MAX_RESULT_TOKENS = 25000
 # There is no tokenizer on the server: tokens are estimated, on the safe side for JSON.
 CHARS_PER_TOKEN = 3
+# How long clients may reuse server/discover and tools/list results when 'bigmcp.cache_ttl_minutes' is not set.
+DEFAULT_CACHE_TTL_MINUTES = 10
 
 INSTRUCTIONS = """You are connected to an Odoo ERP through its ORM.
 Workflow: list_models -> describe_model -> (describe_method) -> search_read / call_method.
@@ -169,6 +171,23 @@ class McpServer(models.AbstractModel):
             _logger.info("MCP tool %s failed: %s", name, exc)
             return {"content": [{"type": "text", "text": f"{type(exc).__name__}: {exc}"}], "isError": True}
         return {"content": [{"type": "text", "text": self._truncate(_json_dumps(result))}]}
+
+    def _cache_hints(self):
+        """Freshness hints of the cacheable results (server/discover, tools/list): the configured TTL, public scope as nothing in them is user specific."""
+        # Settings drops the parameter when the field is emptied or set to 0: the default applies again.
+        minutes = int(self.env['ir.config_parameter'].sudo().get_param(
+            'bigmcp.cache_ttl_minutes', DEFAULT_CACHE_TTL_MINUTES))
+        return {"ttlMs": max(minutes, 0) * 60000, "cacheScope": "public"}
+
+    def _origin_allowed(self, origin, own_origin):
+        """Whether a browser Origin may call /mcp: any by default ('*'), otherwise the configured list plus Odoo's own addresses."""
+        allowed = self.env['ir.config_parameter'].sudo().get_param('bigmcp.allowed_origins', '*')
+        allowed = {item.strip().rstrip('/').lower() for item in allowed.split(',') if item.strip()}
+        if '*' in allowed:
+            return True
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', '')
+        own = {own_origin.rstrip('/').lower(), base_url.rstrip('/').lower()}
+        return origin.rstrip('/').lower() in own | allowed
 
     def _truncate(self, text):
         """Cut a tool result above the configured token limit and tell the assistant how to narrow the request."""

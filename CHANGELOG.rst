@@ -2,6 +2,36 @@
 Changelog
 =========
 
+19.0.2.0.0 (2026-10-20)
+=======================
+
+- **MCP 2026-07-28 desteği.** Sunucu artık çift çağlı: aynı ``/mcp`` adresi hem
+  el sıkışmasız modern istemcilere (her istekte ``_meta`` ile sürüm ve
+  yetenekler, yeni ``server/discover`` çağrısı, sonuçlarda ``resultType`` ve
+  sunucu kimliği, zorunlu ``MCP-Protocol-Version`` / ``Mcp-Method`` /
+  ``Mcp-Name`` başlıklarının gövdeyle doğrulanması, desteklenmeyen sürümde
+  ``supported`` listesiyle ``-32022`` hatası, bilinmeyen metotta ``404``)
+  hem de ``initialize`` ile açan eski istemcilere (2025-11-25, 2025-06-18,
+  2025-03-26; istenen sürüm geri bildirilir) hizmet verir. Modern mesaj
+  içeren toplu (batch) istekler reddedilir.
+- Ayarlar artık Ayarlar sayfasında modülün ikonuyla kendi **BigMCP** başlığı
+  altında (yalnızca **MCP Admin** görür); ``base_setup`` bağımlılığı kalktı.
+  İki yeni ayar:
+
+  - **MCP Cache Duration (minutes)** — modern istemcilerin araç listesini ve
+    sunucu talimatlarını (genel notlar) yeniden sormadan kullanabileceği
+    süre; varsayılan 10 dakika.
+  - **MCP Allowed Origins** — tarayıcıdan gelen isteklerde kabul edilen
+    siteler. Varsayılan ``*`` (hepsi); virgülle ayrılmış liste girilirse
+    yalnızca listedekiler ve Odoo'nun kendi adresi kabul edilir, diğerleri
+    ``403`` alır. Sunucudan sunucuya bağlantılar etkilenmez.
+- MCP el sıkışmasında bildirilen sunucu sürümü artık manifestten okunur.
+- Son kullanıcı için adım adım kurulum kılavuzu (``README.rst``): kurulum,
+  yetki ve API anahtarı, istemci bağlantısı, ayarlar, MCP notları örneklerle,
+  güvenlik ve sorun giderme.
+- Modül ikonu eklendi; ``LICENSE`` dosyası manifestle uyumlu olarak LGPL-3
+  metnine çevrildi; ``.gitignore`` artık ``*.pot`` dosyalarını dışlamıyor.
+
 19.0.1.0.2 (2026-10-02)
 =======================
 
@@ -40,3 +70,12 @@ Changelog
 - Araç sonuçları boşluksuz (kompakt) JSON olarak gönderilir; aynı veri daha az
   token harcar.
 
+
+19.0.1.0.0 (2026-09-17)
+=======================
+
+- İlk yayın: ``POST /mcp`` adresinde durumsuz MCP (Streamable HTTP, JSON-RPC
+  2.0) uç noktası; ``list_models``, ``describe_model``, ``describe_method``,
+  ``search_read`` ve ``call_method`` araçları; API anahtarıyla (Bearer)
+  kimlik doğrulama ve **MCP User** / **MCP Admin** rolleri; asistana genel,
+  model ya da metot düzeyinde gösterilen **MCP Notes**.
