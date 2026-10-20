@@ -2,6 +2,17 @@
 Changelog
 =========
 
+19.0.2.0.1 (2026-10-20)
+=======================
+
+- Çeviri altyapısı: ``i18n/bigmcp.pot`` şablonu ve **Türkçe** çeviri
+  (``i18n/tr.po``, 39 terimin tamamı). Grup adları, MCP notu alanları ve
+  ayar etiketleri Odoo Türkçe kullanıldığında çevrilmiş görünür.
+- README artık iki dilli: ana ``README.rst`` İngilizce, Türkçe metin
+  ``README.tr.rst``; her ikisinin başında dil bağlantısı. Manifestteki
+  açıklama kaldırıldı, Uygulamalar sayfasındaki modül açıklaması da
+  ``README.rst``'den gelir.
+
 19.0.2.0.0 (2026-10-20)
 =======================
 

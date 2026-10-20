@@ -1,0 +1,241 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* bigmcp
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0-20260908\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-20 13:28+0000\n"
+"PO-Revision-Date: 2026-10-20 13:28+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: bigmcp
+#. odoo-python
+#: code:addons/bigmcp/models/mcp_note.py:0
+msgid "A method note needs a model."
+msgstr ""
+
+#. module: bigmcp
+#: model_terms:ir.ui.view,arch_db:bigmcp.res_config_settings_view_form
+msgid "BigMCP"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,help:bigmcp.field_res_config_settings__bigmcp_allowed_origins
+msgid ""
+"Browser origins allowed to call /mcp: '*' (the default) allows any, "
+"otherwise a comma separated list such as https://claude.ai. Odoo's own "
+"address is always allowed. Requests without an Origin header (server to "
+"server) are never blocked."
+msgstr ""
+
+#. module: bigmcp
+#: model_terms:ir.ui.view,arch_db:bigmcp.res_config_settings_view_form
+msgid ""
+"Browser origins allowed to call /mcp: '*' allows any, otherwise a comma "
+"separated list. Odoo's own address is always allowed."
+msgstr ""
+
+#. module: bigmcp
+#: model:res.groups,comment:bigmcp.group_user
+msgid ""
+"Can connect to the /mcp endpoint with an API key; Odoo access rights still "
+"apply to every call."
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model,name:bigmcp.model_res_config_settings
+msgid "Config Settings"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,field_description:bigmcp.field_mcp_note__content
+msgid "Content"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,field_description:bigmcp.field_mcp_note__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,field_description:bigmcp.field_mcp_note__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,field_description:bigmcp.field_mcp_note__display_name
+#: model:ir.model.fields,field_description:bigmcp.field_mcp_server__display_name
+#: model:ir.model.fields,field_description:bigmcp.field_res_config_settings__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: bigmcp
+#: model_terms:ir.actions.act_window,help:bigmcp.action_mcp_note
+msgid "Document the API for AI assistants"
+msgstr ""
+
+#. module: bigmcp
+#: model_terms:ir.ui.view,arch_db:bigmcp.view_mcp_note_search
+msgid "Global"
+msgstr ""
+
+#. module: bigmcp
+#: model_terms:ir.actions.act_window,help:bigmcp.action_mcp_note
+msgid ""
+"Global notes are sent at connection time; model and method notes appear when"
+" the assistant describes them."
+msgstr ""
+
+#. module: bigmcp
+#: model_terms:ir.ui.view,arch_db:bigmcp.res_config_settings_view_form
+msgid ""
+"How long MCP clients may reuse the tool list and the server instructions "
+"(global notes) before asking again."
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,help:bigmcp.field_res_config_settings__bigmcp_cache_ttl_minutes
+msgid ""
+"How long MCP clients may reuse the tool list and the server instructions "
+"(global notes) before asking again. A new global note reaches the assistant "
+"after at most this delay. Empty or 0 restores the default."
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,field_description:bigmcp.field_mcp_note__id
+#: model:ir.model.fields,field_description:bigmcp.field_mcp_server__id
+#: model:ir.model.fields,field_description:bigmcp.field_res_config_settings__id
+msgid "ID"
+msgstr ""
+
+#. module: bigmcp
+#: model_terms:ir.ui.view,arch_db:bigmcp.res_config_settings_view_form
+msgid ""
+"Largest result one MCP tool call may return to the assistant; longer results"
+" are cut."
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,help:bigmcp.field_res_config_settings__bigmcp_max_result_tokens
+msgid ""
+"Largest result one MCP tool call may return to the assistant; longer results"
+" are cut. Tokens are estimated at 3 characters each."
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,field_description:bigmcp.field_mcp_note__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,field_description:bigmcp.field_mcp_note__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,help:bigmcp.field_mcp_note__model_id
+msgid "Leave empty for a global note sent to every client at connection time."
+msgstr ""
+
+#. module: bigmcp
+#: model:res.groups,name:bigmcp.group_admin
+msgid "MCP Admin"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,field_description:bigmcp.field_res_config_settings__bigmcp_allowed_origins
+msgid "MCP Allowed Origins"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,field_description:bigmcp.field_res_config_settings__bigmcp_cache_ttl_minutes
+msgid "MCP Cache Duration (minutes)"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model,name:bigmcp.model_mcp_note
+msgid "MCP Note"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.actions.act_window,name:bigmcp.action_mcp_note
+#: model:ir.ui.menu,name:bigmcp.menu_mcp_note
+msgid "MCP Notes"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,field_description:bigmcp.field_res_config_settings__bigmcp_max_result_tokens
+msgid "MCP Result Limit (tokens)"
+msgstr ""
+
+#. module: bigmcp
+#: model:res.groups.privilege,name:bigmcp.privileges
+msgid "MCP Role"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model,name:bigmcp.model_mcp_server
+#: model:ir.module.category,name:bigmcp.category
+#: model_terms:ir.ui.view,arch_db:bigmcp.res_config_settings_view_form
+msgid "MCP Server"
+msgstr ""
+
+#. module: bigmcp
+#: model:res.groups,name:bigmcp.group_user
+msgid "MCP User"
+msgstr ""
+
+#. module: bigmcp
+#: model:res.groups,comment:bigmcp.group_admin
+msgid "Manages the notes shown to MCP clients."
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,field_description:bigmcp.field_mcp_note__method
+msgid "Method"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,field_description:bigmcp.field_mcp_note__model_id
+#: model:ir.model.fields,field_description:bigmcp.field_mcp_note__model_name
+#: model_terms:ir.ui.view,arch_db:bigmcp.view_mcp_note_search
+msgid "Model"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,help:bigmcp.field_mcp_note__method
+msgid "Optional: attach the note to one public method of the model."
+msgstr ""
+
+#. module: bigmcp
+#: model_terms:ir.ui.view,arch_db:bigmcp.res_config_settings_view_form
+msgid "Security"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,field_description:bigmcp.field_mcp_note__sequence
+msgid "Sequence"
+msgstr ""
+
+#. module: bigmcp
+#: model:ir.model.fields,field_description:bigmcp.field_mcp_note__name
+msgid "Title"
+msgstr ""
+
+#. module: bigmcp
+#. odoo-python
+#: code:addons/bigmcp/models/mcp_server.py:0
+msgid "Unknown model %s. Use list_models to find the technical name."
+msgstr ""
+
+#. module: bigmcp
+#: model_terms:ir.ui.view,arch_db:bigmcp.view_mcp_note_form
+msgid "What the assistant should know, e.g. 'unlink' deletes records."
+msgstr ""
